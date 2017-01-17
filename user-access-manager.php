@@ -80,6 +80,7 @@ require_once 'class/UserAccessManager.php';
 require_once 'class/UamUserGroup.php';
 require_once 'class/UamAccessHandler.php';
 
+//instantiate the UserAccessManager plugin
 if (class_exists("UserAccessManager")) {
     $oUserAccessManager = new UserAccessManager();
 }
@@ -162,7 +163,7 @@ if (!function_exists("userAccessManagerAP")) {
             //Admin filters
             if (function_exists('add_filter')) {
                 //The filter we use instead of add|edit_attachment action, reason see top
-                add_filter('attachment_fields_to_save', array($oUserAccessManager, 'saveAttachmentData'));
+                add_filter('attachment_fields_to_save', array($oUserAccessManager, 'saveAttachmentData'), 10, 2);
 
                 add_filter('manage_posts_columns', array($oUserAccessManager, 'addPostColumnsHeader'));
                 add_filter('manage_pages_columns', array($oUserAccessManager, 'addPostColumnsHeader'));
@@ -226,7 +227,6 @@ if (!function_exists("userAccessManagerAPMenu")) {
             );
         }
         
-        get_userdata($oCurrentUser->ID);
         $oUamAccessHandler = $oUserAccessManager->getAccessHandler();
         
         if ($oUamAccessHandler->checkUserAccess()) {
