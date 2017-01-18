@@ -950,8 +950,8 @@ class UamUserGroup
                 $oDatabase = $this->getAccessHandler()->getUserAccessManager()->getDatabase();
 
                 $aDbObjects = $oDatabase->get_results(
-                    "SELECT tr.object_id AS objectId, tr.term_taxonomy_id AS termId
-                    FROM ".$oDatabase->term_relationships." AS tr"
+                    "SELECT tr.object_id AS objectId, tt.term_id as termId
+                    FROM ".$oDatabase->term_relationships." AS tr JOIN ".$oDatabase->term_taxonomy." AS tt on tr.term_taxonomy_id = tt.term_taxonomy_id"
                 );
 
                 foreach ($aDbObjects as $oDbObject) {
