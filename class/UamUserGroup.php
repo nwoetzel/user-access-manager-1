@@ -942,22 +942,27 @@ class UamUserGroup
     {
         if ($this->_aObjectsInTerm === null) {
             $this->_aObjectsInTerm = array();
-        }
 
-        if (!isset($this->_aObjectsInTerm[$iPostId])) {
-            $this->_aObjectsInTerm[$iPostId] = array();
-            $oPost = get_post($iPostId);
-            $aTaxonomyNames = get_object_taxonomies($oPost);
-            foreach ($aTaxonomyNames as $sTaxonomy) {
-                $aTermIds = wp_get_post_terms($oPost->ID,$sTaxonomy,array('fields' => 'ids'));
-                foreach ($aTermIds as $iId) {
-                    $this->_aObjectsInTerm[$iPostId][$iId] = $sTaxonomy;
+            $sCacheKey = '_isPostInTerm';
+            $oUserAccessManager = $this->getAccessHandler()->getUserAccessManager();
+
+            $oDatabase = $this->getAccessHandler()->getUserAccessManager()->getDatabase();
+            $aDbObjects = $oDatabase->get_results(
+                "SELECT tr.object_id AS objectId, tt.term_id as termId, tt.taxonomy as taxonomy
+                    FROM ".$oDatabase->term_relationships." AS tr JOIN ".$oDatabase->term_taxonomy." AS tt ON tr.term_taxonomy_id = tt.term_taxonomy_id"
+            );
+            
+            foreach ($aDbObjects as $oDbObject) {
+                if (!isset($this->_aObjectsInTerm[$oDbObject->objectId])) {
+                    $this->_aObjectsInTerm[$oDbObject->objectId] = array();
                 }
+                $this->_aObjectsInTerm[$oDbObject->objectId][$oDbObject->termId] = $oDbObject->taxonomy;
             }
+            
+            $oUserAccessManager->addToCache($sCacheKey, $this->_aObjectsInTerm);
         }
 
         return isset($this->_aObjectsInTerm[$iPostId][$iTermId]) ? $this->_aObjectsInTerm[$iPostId][$iTermId] : false;
-
     }
     
     /**
