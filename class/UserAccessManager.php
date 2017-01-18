@@ -201,11 +201,15 @@ class UserAccessManager
      */
     public function getTerm($sId, $sTaxonomy = null)
     {
-        if (!isset($this->_aTerms[$sId])) {
-            $this->_aTerms[$sId] = get_term_by('id',$sId, $sTaxonomy);
+        if (!isset($this->_aTerms[$sTaxonomy])) {
+            $this->_aTerms[$sTaxonomy] = array();
         }
 
-        return $this->_aTerms[$sId];
+        if (!isset($this->_aTerms[$sTaxonomy][$sId])) {
+            $this->_aTerms[$sTaxonomy][$sId] = get_term_by('id',$sId,$sTaxonomy);
+        }
+
+        return $this->_aTerms[$sTaxonomy][$sId];
     }
     
     /**

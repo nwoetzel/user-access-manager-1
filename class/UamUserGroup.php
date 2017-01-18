@@ -942,34 +942,22 @@ class UamUserGroup
     {
         if ($this->_aObjectsInTerm === null) {
             $this->_aObjectsInTerm = array();
-            $sCacheKey = '_isPostInTerm';
-            $oUserAccessManager = $this->getAccessHandler()->getUserAccessManager();
-            $aObjectsInCategory = $oUserAccessManager->getFromCache($sCacheKey);
+        }
 
-            if ($aObjectsInCategory === null) {
-                $oDatabase = $this->getAccessHandler()->getUserAccessManager()->getDatabase();
-
-                $aDbObjects = $oDatabase->get_results(
-                    "SELECT tr.object_id AS objectId, tt.term_id as termId
-                    FROM ".$oDatabase->term_relationships." AS tr JOIN ".$oDatabase->term_taxonomy." AS tt on tr.term_taxonomy_id = tt.term_taxonomy_id"
-                );
-
-                foreach ($aDbObjects as $oDbObject) {
-                    if (!isset($this->_aObjectsInTerm[$oDbObject->objectId])) {
-                        $this->_aObjectsInTerm[$oDbObject->objectId] = array();
-                    }
-
-                    $this->_aObjectsInTerm[$oDbObject->objectId][$oDbObject->termId] = $oDbObject->termId;
+        if (!isset($this->_aObjectsInTerm[$iPostId])) {
+            $this->_aObjectsInTerm[$iPostId] = array();
+            $oPost = get_post($iPostId);
+            $aTaxonomyNames = get_object_taxonomies($oPost);
+            foreach ($aTaxonomyNames as $sTaxonomy) {
+                $aTermIds = wp_get_post_terms($oPost->ID,$sTaxonomy,array('fields' => 'ids'));
+                foreach ($aTermIds as $iId) {
+                    $this->_aObjectsInTerm[$iPostId][$iId] = $sTaxonomy;
                 }
-
-                $oUserAccessManager->addToCache($sCacheKey, $this->_aObjectsInTerm);
-            } else {
-                $this->_aObjectsInTerm = $aObjectsInCategory;
             }
         }
 
-        return (isset($this->_aObjectsInTerm[$iPostId])
-            &&  isset($this->_aObjectsInTerm[$iPostId][$iTermId]));
+        return isset($this->_aObjectsInTerm[$iPostId][$iTermId]) ? $this->_aObjectsInTerm[$iPostId][$iTermId] : false;
+
     }
     
     /**
@@ -988,8 +976,9 @@ class UamUserGroup
         $aTerms = $this->getObjectsFromType(UserAccessManager::TERM_OBJECT_TYPE, self::OBJECTS_FULL);
 
         foreach ($aTerms as $oTerm) {
-            if ($this->_isPostInTerm($oPost->ID, $oTerm->id)) {
-                $oTermObject = $this->getAccessHandler()->getUserAccessManager()->getTerm($oTerm->id);
+            $sTaxonomy = $this->_isPostInTerm($oPost->ID, $oTerm->id);
+            if ($sTaxonomy !== false) {
+                $oTermObject = $this->getAccessHandler()->getUserAccessManager()->getTerm($oTerm->id,$sTaxonomy);
 
                 if ($oTermObject === false) {
                     continue;
