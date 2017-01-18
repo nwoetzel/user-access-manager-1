@@ -192,20 +192,17 @@ class UserAccessManager
      *
      * @return mixed
      */
-    public function getTerm($sId, $sTaxonomy = '')
+    public function getTerm($sId, $sTaxonomy = null)
     {
-        if (!isset($this->_aTerms[$sId])) {
-            $iPriority = has_filter('get_term', array($this, 'showTerm'));
-            $blRemoveSuccess = remove_filter('get_term', array($this, 'showTerm'), $iPriority);
-
-            $this->_aTerms[$sId] = get_term($sId, $sTaxonomy);
-
-            if ($blRemoveSuccess === true) {
-                add_filter('get_term', array($this, 'showTerm'), $iPriority, 2);
-            }
+        if (!isset($this->_aTerms[$sTaxonomy])) {
+            $this->_aTerms[$sTaxonomy] = array();
         }
 
-        return $this->_aTerms[$sId];
+        if (!isset($this->_aTerms[$sTaxonomy][$sId])) {
+            $this->_aTerms[$sTaxonomy][$sId] = get_term_by('id',$sId,$sTaxonomy);
+        }
+
+        return $this->_aTerms[$sTaxonomy][$sId];
     }
     
     /**
